@@ -1,58 +1,100 @@
 package itiscuneo.zephyrdrone
 
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.os.Handler
+import android.os.Looper
+import android.widget.Button
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
-import itiscuneo.zephyrdrone.databinding.ActivityMainBinding
+import java.net.NetworkInterface
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
-private lateinit var binding: ActivityMainBinding
+    private var server: DroneHttpServer? = null
+    private var isRunning = false
+    private val handler = Handler(Looper.getMainLooper())
+
+    private lateinit var tvStatus: TextView
+    private lateinit var tvIp: TextView
+    private lateinit var tvDrone: TextView
+    private lateinit var tvLog: TextView
+    private lateinit var btnToggle: Button
+    private lateinit var scrollLog: ScrollView
+
+    // Aggiorna stato drone ogni 3 secondi
+    private val statusRunnable = object : Runnable {
+        override fun run() {
+            updateDroneStatus()
+            handler.postDelayed(this, 3000)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-     binding = ActivityMainBinding.inflate(layoutInflater)
-     setContentView(binding.root)
+        tvStatus  = findViewById(R.id.tvStatus)
+        tvIp      = findViewById(R.id.tvIp)
+        tvDrone   = findViewById(R.id.tvDrone)
+        tvLog     = findViewById(R.id.tvLog)
+        btnToggle = findViewById(R.id.btnToggle)
+        scrollLog = findViewById(R.id.scrollLog)
 
-        setSupportActionBar(binding.toolbar)
+        tvIp.text = "IP: ${getLocalIpAddress() ?: "non trovato"}"
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
-        binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null)
-                    .setAnchorView(R.id.fab).show()
+        btnToggle.setOnClickListener {
+            if (!isRunning) startServer() else stopServer()
         }
-    }
-override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
+
+        handler.post(statusRunnable)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        return when(item.itemId) {
-            R.id.action_settings -> true
-            else -> super.onOptionsItemSelected(item)
+    private fun startServer() {
+        server = DroneHttpServer(8080) { msg ->
+            runOnUiThread { appendLog(msg) }
         }
+        server?.start()
+        isRunning = true
+        btnToggle.text = "⏹ STOP SERVER"
+        btnToggle.setBackgroundColor(getColor(android.R.color.holo_red_dark))
+        tvStatus.text = "🟢 Server attivo — porta 8080"
+        appendLog("Server avviato su :8080")
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-    val navController = findNavController(R.id.nav_host_fragment_content_main)
-    return navController.navigateUp(appBarConfiguration)
-            || super.onSupportNavigateUp()
+    private fun stopServer() {
+        server?.stop()
+        server = null
+        isRunning = false
+        btnToggle.text = "▶ START SERVER"
+        btnToggle.setBackgroundColor(getColor(android.R.color.holo_green_dark))
+        tvStatus.text = "🔴 Server fermo"
+        appendLog("Server fermato")
+    }
+
+    private fun updateDroneStatus() {
+        val connected  = ZephyrDroneApp.isDroneConnected
+        val registered = ZephyrDroneApp.sdkRegistered
+        tvDrone.text = "${if (registered) "SDK ✅" else "SDK ❌"}   ${if (connected) "Drone 🟢" else "Drone 🔴"}"
+    }
+
+    private fun appendLog(msg: String) {
+        tvLog.append("\n› $msg")
+        scrollLog.post { scrollLog.fullScroll(ScrollView.FOCUS_DOWN) }
+    }
+
+    private fun getLocalIpAddress(): String? {
+        return try {
+            NetworkInterface.getNetworkInterfaces().toList()
+                .flatMap { it.inetAddresses.toList() }
+                .firstOrNull { !it.isLoopbackAddress && it.hostAddress?.contains('.') == true }
+                ?.hostAddress
+        } catch (e: Exception) { null }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacks(statusRunnable)
+        stopServer()
     }
 }

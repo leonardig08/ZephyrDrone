@@ -76,7 +76,9 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.material
     implementation libs.dji.sdk
+    implementation libs.nanohttpd
     compileOnly libs.dji.sdk.provided
+
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
