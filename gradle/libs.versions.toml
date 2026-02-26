@@ -1,0 +1,16 @@
+[versions]
+agp = "8.7.0"
+kotlin = "1.9.0"
+djiSdk = "5.9.0"
+appcompat = "1.6.1"
+material = "1.8.0"
+
+[libraries]
+dji-sdk = { group = "com.dji", name = "dji-sdk-v5-aircraft", version.ref = "djiSdk" }
+dji-sdk-provided = { group = "com.dji", name = "dji-sdk-v5-aircraft-provided", version.ref = "djiSdk" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
