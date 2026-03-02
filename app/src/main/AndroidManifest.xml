@@ -28,9 +28,12 @@
     <uses-feature
         android:name="android.hardware.usb.accessory"
         android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
-        android:name=".MyApplication"
+        android:name=".ZephyrDroneApp"
         android:extractNativeLibs="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -43,7 +46,7 @@
 
         <meta-data
             android:name="com.dji.sdk.API_KEY"
-            android:value="your_app_key_here"/>
+            android:value="5ad11b4f8fa1a92d760e3f64"/>
 
         <activity
             android:name=".MainActivity"

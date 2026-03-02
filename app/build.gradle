@@ -1,15 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     id 'kotlin-kapt'
 }
 
 android {
-    namespace 'com.example.zephyrdrone'
-    compileSdk 35
+    namespace 'itiscuneo.zephyrdrone'
+    compileSdk 36
 
     defaultConfig {
-        applicationId "com.example.zephyrdrone"
+        applicationId "itiscuneo.zephyrdrone"
         minSdk 24
         targetSdk 35
         versionCode 1
@@ -76,7 +75,11 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.material
     implementation libs.dji.sdk
-    implementation libs.nanohttpd
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.gson)
     compileOnly libs.dji.sdk.provided
 
 
